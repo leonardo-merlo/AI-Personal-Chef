@@ -11,10 +11,10 @@ export const Header = () => {
             className="w-16 h-16 animate-float"
           />
           <h1 className="text-4xl md:text-5xl font-bold text-white">
-            🍳 Personal AI Chef
+            Personal AI Chef
           </h1>
         </div>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <p className="text-lg text-white/90 font-medium max-w-2xl mx-auto">
           Seu assistente culinário inteligente que cria receitas personalizadas baseadas em seus ingredientes e preferências
         </p>
       </div>
