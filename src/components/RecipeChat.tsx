@@ -6,7 +6,47 @@ import { ChefHat, Sparkles, Clock, Users } from "lucide-react";
 
 export const RecipeChat = () => {
   const [userInput, setUserInput] = useState("");
-  const [recipe, setRecipe] = useState("");
+  const [recipe, setRecipe] = useState(`# Risotto de Cogumelos Especial
+
+## Prato Principal - Sofisticado e Cremoso
+
+**Tempo de preparo:** 35 minutos  
+**Porções:** 4 pessoas  
+**Dificuldade:** Intermediário
+
+### Ingredientes:
+- 2 xícaras de arroz arbório
+- 300g de cogumelos Paris frescos
+- 1 litro de caldo de legumes quente
+- 1 cebola média picada
+- 3 dentes de alho picados
+- 1/2 xícara de vinho branco seco
+- 100g de queijo parmesão ralado
+- 2 colheres de sopa de manteiga
+- 3 colheres de sopa de azeite extra virgem
+- Sal e pimenta-do-reino moída na hora
+- Salsinha fresca picada para finalizar
+
+### Modo de preparo:
+1. **Prepare o mise en place:** Corte os cogumelos em fatias, pique a cebola e o alho. Mantenha o caldo quente em panela separada.
+
+2. **Refogue os cogumelos:** Em uma frigideira, aqueça 1 colher de azeite e doure os cogumelos até ficarem dourados. Reserve.
+
+3. **Inicie o risotto:** Na panela do risotto, aqueça o azeite restante e refogue a cebola até ficar translúcida. Adicione o alho e refogue por mais 1 minuto.
+
+4. **Toste o arroz:** Adicione o arroz e mexa por 2 minutos para "nacarar" os grãos.
+
+5. **Deglaceie:** Adicione o vinho branco e mexa até evaporar o álcool.
+
+6. **Cozimento cremoso:** Adicione o caldo quente uma concha de cada vez, mexendo sempre, até o arroz ficar al dente (cerca de 18-20 minutos).
+
+7. **Finalização:** Incorpore os cogumelos reservados, a manteiga, o parmesão e tempere com sal e pimenta.
+
+8. **Apresentação:** Sirva imediatamente polvilhado com salsinha fresca.
+
+**Dica do chef:** O segredo do risotto perfeito está na paciência e no mexer constante. O arroz deve soltar amido gradualmente para criar a cremosidade característica!
+
+**Harmonização:** Acompanha perfeitamente com um vinho branco Chardonnay ou Pinot Grigio.`);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerateRecipe = async () => {

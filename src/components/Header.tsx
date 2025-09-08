@@ -1,14 +1,16 @@
-import { ChefHat } from "lucide-react";
+import chefAvatar from "@/assets/chef-avatar.png";
 
 export const Header = () => {
   return (
     <header className="w-full py-8">
       <div className="container mx-auto px-4 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
-          <div className="p-3 bg-gradient-hero rounded-xl shadow-medium">
-            <ChefHat className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-hero bg-clip-text text-transparent">
+          <img 
+            src={chefAvatar} 
+            alt="Chef Avatar" 
+            className="w-16 h-16 animate-float"
+          />
+          <h1 className="text-4xl md:text-5xl font-bold text-white">
             🍳 Personal AI Chef
           </h1>
         </div>
