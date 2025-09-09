@@ -4,66 +4,24 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChefHat, Sparkles, Clock, Users } from "lucide-react";
 import risottoImage from "@/assets/risotto-example.jpg";
+import { Badge } from "@/components/ui/badge";
 
 export const RecipeChat = () => {
   const [userInput, setUserInput] = useState("");
-  const [recipe, setRecipe] = useState({
-    title: "Risotto de Cogumelos Especial",
-    subtitle: "Prato Principal - Sofisticado e Cremoso",
-    image: risottoImage,
-    prepTime: "35 minutos",
-    servings: "4 pessoas",
-    difficulty: "Intermediário",
-    ingredients: [
-      "2 xícaras de arroz arbório",
-      "300g de cogumelos Paris frescos",
-      "1 litro de caldo de legumes quente",
-      "1 cebola média picada",
-      "3 dentes de alho picados",
-      "1/2 xícara de vinho branco seco",
-      "100g de queijo parmesão ralado",
-      "2 colheres de sopa de manteiga",
-      "3 colheres de sopa de azeite extra virgem",
-      "Sal e pimenta-do-reino moída na hora",
-      "Salsinha fresca picada para finalizar"
-    ],
-    instructions: [
-      {
-        title: "Prepare o mise en place:",
-        content: "Corte os cogumelos em fatias, pique a cebola e o alho. Mantenha o caldo quente em panela separada."
-      },
-      {
-        title: "Refogue os cogumelos:",
-        content: "Em uma frigideira, aqueça 1 colher de azeite e doure os cogumelos até ficarem dourados. Reserve."
-      },
-      {
-        title: "Inicie o risotto:",
-        content: "Na panela do risotto, aqueça o azeite restante e refogue a cebola até ficar translúcida. Adicione o alho e refogue por mais 1 minuto."
-      },
-      {
-        title: "Toste o arroz:",
-        content: "Adicione o arroz e mexa por 2 minutos para \"nacarar\" os grãos."
-      },
-      {
-        title: "Deglaceie:",
-        content: "Adicione o vinho branco e mexa até evaporar o álcool."
-      },
-      {
-        title: "Cozimento cremoso:",
-        content: "Adicione o caldo quente uma concha de cada vez, mexendo sempre, até o arroz ficar al dente (cerca de 18-20 minutos)."
-      },
-      {
-        title: "Finalização:",
-        content: "Incorpore os cogumelos reservados, a manteiga, o parmesão e tempere com sal e pimenta."
-      },
-      {
-        title: "Apresentação:",
-        content: "Sirva imediatamente polvilhado com salsinha fresca."
-      }
-    ],
-    tip: "O segredo do risotto perfeito está na paciência e no mexer constante. O arroz deve soltar amido gradualmente para criar a cremosidade característica!",
-    pairing: "Acompanha perfeitamente com um vinho branco Chardonnay ou Pinot Grigio."
-  });
+  type Recipe = {
+    title: string;
+    subtitle: string;
+    image: string;
+    prepTime: string;
+    servings: string;
+    difficulty: string;
+    ingredients: string[];
+    instructions: { title: string; content: string }[];
+    tip: string;
+    pairing: string;
+    diets?: string[];
+  } | null;
+  const [recipe, setRecipe] = useState<Recipe>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerateRecipe = async () => {
@@ -71,49 +29,94 @@ export const RecipeChat = () => {
     
     setIsLoading(true);
     
-    // Simulate API call - replace with your n8n backend call
     try {
-      // TODO: Replace with actual API call to your n8n backend
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate loading
-      
-      // Mock response for demonstration
-      const mockRecipe = {
-        title: userInput.includes("massa") ? "Massa Especial" : "Prato Delicioso",
-        subtitle: "Receita personalizada baseada nos seus ingredientes",
-        image: risottoImage,
-        prepTime: "30 minutos",
-        servings: "4 pessoas",
-        difficulty: "Fácil",
-        ingredients: [
-          "2 xícaras de ingrediente principal",
-          "1 cebola média",
-          "2 dentes de alho",
-          "Sal e pimenta a gosto",
-          "Azeite de oliva"
-        ],
-        instructions: [
-          {
-            title: "Prepare os ingredientes:",
-            content: "Corte todos os ingredientes em pedaços uniformes."
-          },
-          {
-            title: "Refogue:",
-            content: "Aqueça o azeite e refogue a cebola e o alho até dourar."
-          },
-          {
-            title: "Adicione o principal:",
-            content: "Coloque o ingrediente principal e tempere."
-          },
-          {
-            title: "Finalize:",
-            content: "Cozinhe por 20 minutos em fogo médio e sirva quente."
-          }
-        ],
-        tip: "Experimente adicionar ervas frescas para realçar o sabor!",
-        pairing: "Acompanha bem com uma salada fresca."
-      };
-      
-      setRecipe(mockRecipe);
+      // Envia o input do usuário para o webhook do n8n
+      const webhookUrl = "https://leonardomerlo.app.n8n.cloud/webhook/e4b612dd-a4a9-4f96-8a62-afaa9edad42e";
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ userInput })
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro do webhook: ${response.status} - ${errorText}`);
+      }
+
+      // Tenta ler JSON do fluxo n8n → Spoonacular
+      const data = await response.json().catch(async () => {
+        const text = await response.text();
+        console.debug("Resposta do n8n (texto):", text);
+        return null;
+      });
+
+      // Mapear possíveis formatos vindos do n8n/Spoonacular
+      // Esperados: title, readyInMinutes, servings, image,
+      // extendedIngredients[].original OR ingredients[],
+      // analyzedInstructions[0].steps[].step OR instructions (string)
+      const spoonacular = Array.isArray(data) ? data[0] : data; // caso o n8n retorne em array
+
+      const title: string = spoonacular?.title ?? "Receita sugerida";
+      const readyInMinutes: number | string | undefined = spoonacular?.readyInMinutes;
+      const servingsRaw: number | string | undefined = spoonacular?.servings;
+      const image: string = spoonacular?.image ?? risottoImage;
+
+      // Ingredientes
+      const ingredientsFromExtended: string[] = spoonacular?.extendedIngredients?.map((ing: { name?: string; amount?: number | string; unit?: string; original?: string; originalString?: string }) => {
+        // Prioriza name + amount (e unit, se houver), senão cai em original
+        const name = ing.name?.toString().trim();
+        const amount = ing.amount !== undefined && ing.amount !== null ? String(ing.amount) : "";
+        const unit = ing.unit ? String(ing.unit) : "";
+        const formatted = [amount, unit, name].filter(Boolean).join(" ").trim();
+        return formatted || ing.original || ing.originalString;
+      }).filter(Boolean) ?? [];
+      const ingredientsFallback: string[] = spoonacular?.ingredients ?? [];
+      const ingredients: string[] = (ingredientsFromExtended.length ? ingredientsFromExtended : ingredientsFallback) as string[];
+
+      // Instruções
+      let steps: { title: string; content: string }[] = [];
+      const analyzed = spoonacular?.analyzedInstructions?.[0]?.steps ?? [];
+      if (Array.isArray(analyzed) && analyzed.length) {
+        steps = analyzed.map((s: { number?: number; step?: string }, idx: number) => ({
+          title: `Step ${s.number ?? idx + 1}:`,
+          content: String(s.step ?? "").trim()
+        })).filter(s => s.content);
+      } else if (spoonacular?.instructions && typeof spoonacular.instructions === "string") {
+        const parts = String(spoonacular.instructions)
+          .split(/\.(?!\d)/)
+          .map((p: string) => p.trim())
+          .filter(Boolean);
+        steps = parts.map((p: string, idx: number) => ({ title: `Passo ${idx + 1}:`, content: p + "." }));
+      }
+
+      const diets: string[] = Array.isArray(spoonacular?.diets) ? spoonacular.diets : [];
+
+      // Dificuldade heurística simples baseada no tempo
+      const minutesNum = typeof readyInMinutes === "number" ? readyInMinutes : parseInt(String(readyInMinutes ?? "0"), 10);
+      const difficulty = isNaN(minutesNum)
+        ? "—"
+        : minutesNum <= 20
+          ? "Easy"
+          : minutesNum <= 40
+            ? "Medium"
+            : "Hard";
+
+      const mappedRecipe = {
+        title,
+        subtitle: "Recipe generated by  IA",
+        image,
+        prepTime: readyInMinutes ? `${readyInMinutes} minutes` : "—",
+        servings: servingsRaw ? `${servingsRaw} people` : "—",
+        difficulty,
+        ingredients: ingredients.length ? ingredients : ["Ingredientes não informados."],
+        instructions: steps.length ? steps : [{ title: "Instruções:", content: "Não foram fornecidas instruções detalhadas." }],
+        tip: "Dica: ajuste o sal no final e prove antes de servir.",
+        pairing: "Sugestão: sirva com salada ou legumes grelhados.",
+        diets
+      } as const;
+
+      setRecipe(mappedRecipe);
     } catch (error) {
       console.error("Erro ao gerar receita:", error);
       // Reset to null on error
@@ -132,17 +135,16 @@ export const RecipeChat = () => {
             <div className="text-center space-y-3">
               <div className="flex items-center justify-center gap-2 text-primary">
                 <Sparkles className="w-6 h-6" />
-                <h2 className="text-2xl font-bold">O que você gostaria de comer hoje?</h2>
+                <h2 className="text-2xl font-bold">What would you like to eat today?</h2>
               </div>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Descreva seus ingredientes, restrições alimentares, preferências ou simplesmente o que está com vontade de comer. 
-                Nosso chef virtual criará uma receita personalizada para você!
+              Describe your ingredients, preferences, or simply what you’re craving. Our virtual chef will create a personalized recipe for you!
               </p>
             </div>
             
             <div className="space-y-4">
               <Textarea
-                placeholder="Ex: Tenho frango, brócolis e queijo. Quero algo saudável para o jantar..."
+                placeholder="Ex: I have chicken, broccoli, and cheese. I want something healthy for dinner..."
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 className="min-h-[140px] text-base"
@@ -159,12 +161,12 @@ export const RecipeChat = () => {
                   {isLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent" />
-                      Criando sua receita...
+                      Generating your recipe...
                     </>
                   ) : (
                     <>
                       <ChefHat className="w-5 h-5" />
-                      Gerar Receita
+                      Generate Recipe
                     </>
                   )}
                 </Button>
@@ -179,11 +181,11 @@ export const RecipeChat = () => {
         <Card className="overflow-hidden">
           <CardContent className="p-0">
             {/* Recipe Image */}
-            <div className="w-full h-64 overflow-hidden">
+            <div className="w-full h-96 overflow-hidden">
               <img 
                 src={recipe.image} 
                 alt={recipe.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
             
@@ -193,8 +195,8 @@ export const RecipeChat = () => {
                   <ChefHat className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">Sua Receita Personalizada</h3>
-                  <p className="text-sm text-muted-foreground">Criada especialmente para você</p>
+                  <h3 className="text-xl font-bold">Your Personalized Recipe</h3>
+                  <p className="text-sm text-muted-foreground">Created especially for you</p>
                 </div>
               </div>
               
@@ -202,26 +204,33 @@ export const RecipeChat = () => {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground mb-2">{recipe.title}</h2>
-                  <p className="text-lg text-muted-foreground font-medium">{recipe.subtitle}</p>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Tempo</p>
+                    <p className="text-sm text-muted-foreground">Time</p>
                     <p className="font-bold">{recipe.prepTime}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Porções</p>
+                    <p className="text-sm text-muted-foreground">Servings</p>
                     <p className="font-bold">{recipe.servings}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground">Dificuldade</p>
+                    <p className="text-sm text-muted-foreground">Difficulty</p>
                     <p className="font-bold">{recipe.difficulty}</p>
                   </div>
                 </div>
+
+                {recipe.diets && recipe.diets.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {recipe.diets.map((diet, idx) => (
+                      <Badge key={idx} variant="secondary">{diet}</Badge>
+                    ))}
+                  </div>
+                )}
                 
                 <div>
-                  <h3 className="text-xl font-bold mb-3">Ingredientes:</h3>
+                  <h3 className="text-xl font-bold mb-3">Ingredients:</h3>
                   <ul className="space-y-1">
                     {recipe.ingredients.map((ingredient, index) => (
                       <li key={index} className="flex items-start gap-2">
@@ -233,7 +242,7 @@ export const RecipeChat = () => {
                 </div>
                 
                 <div>
-                  <h3 className="text-xl font-bold mb-3">Modo de preparo:</h3>
+                  <h3 className="text-xl font-bold mb-3">Instructions:</h3>
                   <ol className="space-y-3">
                     {recipe.instructions.map((step, index) => (
                       <li key={index} className="flex gap-3">
@@ -248,31 +257,9 @@ export const RecipeChat = () => {
                   </ol>
                 </div>
                 
-                <div className="bg-accent/10 p-4 rounded-lg border-l-4 border-accent">
-                  <p className="font-bold text-accent mb-1">Dica do chef:</p>
-                  <p className="text-sm">{recipe.tip}</p>
-                </div>
                 
-                <div className="bg-primary/10 p-4 rounded-lg">
-                  <p className="font-bold text-primary mb-1">Harmonização:</p>
-                  <p className="text-sm">{recipe.pairing}</p>
-                </div>
               </div>
               
-              <div className="flex flex-wrap gap-4 pt-4 border-t border-border">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>{recipe.prepTime}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span>{recipe.servings}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Sparkles className="w-4 h-4" />
-                  <span>Personalizada</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

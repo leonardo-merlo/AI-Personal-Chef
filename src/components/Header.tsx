@@ -1,4 +1,4 @@
-import chefAvatar from "@/assets/chef-avatar.png";
+import chefAvatar from "@/assets/avatar-leo.png";
 
 export const Header = () => {
   return (
@@ -15,7 +15,7 @@ export const Header = () => {
           </h1>
         </div>
         <p className="text-lg text-white/90 font-medium max-w-2xl mx-auto">
-          Seu assistente culinário inteligente que cria receitas personalizadas baseadas em seus ingredientes e preferências
+        Your smart culinary assistant that creates personalized recipes based on your ingredients and preferences
         </p>
       </div>
     </header>
